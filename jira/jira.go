@@ -2,6 +2,7 @@ package gojira
 
 import (
 	"fmt"
+    "encoding/json"
 	"io/ioutil"
 	"net/http"
 	"math"
@@ -19,6 +20,38 @@ type Auth struct {
 	Login    string
 	Password string
 }
+
+type JiraDashboard struct {
+    StartAt                 uint
+    MaxResults              uint
+    Total                   uint
+    Dashboards              []struct {
+        Id                      string
+        Name                    string
+        Self                    string
+        View                    string
+    }
+}
+
+
+type JiraField struct {
+    Id                      string
+    Name                    string
+    Custom                  bool
+    Orderable               bool
+    Navigable               bool
+    Searchable              bool
+    ClauseNames             []string
+    Schema                  struct {
+        Type                    string
+        Items                   string
+        system                  string
+    }
+}
+
+
+
+
 
 type Pagination struct {
 	Total      int
@@ -110,4 +143,32 @@ func (j *Jira) buildAndExecRequest(method string, url string) []byte {
 	}
 
 	return contents
+}
+
+
+func (j *Jira) Dashboard()  JiraDashboard {
+	url := j.BaseUrl + j.ApiPath + "/dashboard"
+	contents := j.buildAndExecRequest("GET", url)
+
+	var dashboard JiraDashboard
+	err := json.Unmarshal(contents, &dashboard)
+	if err != nil {
+		fmt.Println("%s", err)
+	}
+
+	return dashboard
+}
+
+
+func (j *Jira) Field()  []JiraField {
+	url := j.BaseUrl + j.ApiPath + "/field"
+	contents := j.buildAndExecRequest("GET", url)
+
+	var fields []JiraField
+	err := json.Unmarshal(contents, &fields)
+	if err != nil {
+		fmt.Println("%s", err)
+	}
+
+	return fields
 }

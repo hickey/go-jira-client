@@ -11,57 +11,56 @@ import (
 
 
 type Issue struct {
-	Id        string
-	Key       string
-	Self      string
-	Expand    string
-	Fields    *IssueFields
-    CreatedAt time.Time
+	Id                      string
+	Key                     string
+	Self                    string
+	Expand                  string
+    CreatedAt               time.Time
+	Fields                  struct {
+	    IssueType               *IssueType
+	    Summary                 string
+	    Description             string
+        Status                  *Status
+	    Reporter                *User
+	    Assignee                *User
+        Creator                 *User
+	    Project                 *Project
+	    Created                 string
+        Updated                 string
+        LastViewed              string
+        Environment             string
+        Versions                []string
+        Components              []string
+        Labels                  []string
+        Progress                *Progress
+        Votes                   *Votes
+        Priority                *Priority
+        Watches                 *Watches
+        DueDate                 string
+        Resolution              string
+        ResolutionDate          string
+        TimeSpent               string
+        WorkLog                 *WorkLog
+        SubTasks                []*SubTasks
+        IssueLinks              []*IssueLink
+        WorkRatio               int
+        Comment                 *Comment
+        //Attachment
+        //TimeTracking
+        //fixVersions
+    
+    }    
 }
 
 type IssueList struct {
-	Expand     string
-	StartAt    int
-	MaxResults int
-	Total      int
-	Issues     []*Issue
-	Pagination *Pagination
+	Expand                  string
+	StartAt                 int
+	MaxResults              int
+	Total                   int
+	Issues                  []*Issue
+	Pagination              *Pagination
 }
 
-type IssueFields struct {
-	IssueType               *IssueType
-	Summary                 string
-	Description             string
-    Status                  *Status
-	Reporter                *User
-	Assignee                *User
-    Creator                 *User
-	Project                 *JiraProject
-	Created                 string
-    Updated                 string
-    LastViewed              string
-    Environment             string
-    Versions                []string
-    Components              []string
-    Labels                  []string
-    Progress                *Progress
-    Votes                   *Votes
-    Priority                *Priority
-    Watches                 *Watches
-    DueDate                 string
-    Resolution              string
-    ResolutionDate          string
-    TimeSpent               string
-    WorkLog                 *WorkLog
-    SubTasks                []*SubTasks
-    IssueLinks              []*IssueLink
-    WorkRatio               int
-    Comment                 *Comment
-    //Attachment
-    //TimeTracking
-    //fixVersions
-    
-}
 
 type IssueType struct {
 	Self                    string
@@ -72,42 +71,11 @@ type IssueType struct {
 	Subtask                 bool
 }
 
-type JiraProject struct {
-	Self                    string
-	Id                      string
-	Key                     string
-	Name                    string
-	AvatarUrls              map[string]string
-}
-
-type Priority struct {
-    Self                    string
-    IconUrl                 string
-    Name                    string
-    Id                      string
-}
-
 type Progress struct {
     Progress                uint
     Total                   uint
 }
 
-type Status struct {
-    Self                    string
-    Description             string
-    IconUrl                 string
-    Name                    string
-    Id                      string
-    StatusCategory          *StatusCategory
-}
-
-type StatusCategory struct {
-    Self                    string
-    Id                      uint
-    Key                     string
-    ColorName               string
-    Name                    string
-}
 
 type Votes struct {
     Self                    string
@@ -136,19 +104,17 @@ type IssueLinkType struct {
     Outward                 string
     Self                    string
 }
-
+    
 type IssueLinkRelation struct {
     Id                      string
     Key                     string
     Self                    string
-    Fields                  *IssueLinkRelationFields    
-}
-
-type IssueLinkRelationFields struct {
-    Summary                 string
-    Status                  *Status
-    Priority                *Priority
-    IssueType               *IssueType
+    Fields                  struct {
+        Summary                 string
+        Status                  *Status
+        Priority                *Priority
+        IssueType               *IssueType
+    }   
 }
 
 type WorkLog struct {
@@ -166,18 +132,17 @@ type Comment struct {
     StartAt                 uint
     MaxResults              uint
     Total                   uint
-    Comments                []*CommentEntry
+    Comments                []struct {
+        Self                    string
+        Id                      string
+        Body                    string
+        Author                  *User
+        UpdateAuthor            *User
+        Created                 string
+        Updated                 string
+    }
 }
 
-type CommentEntry struct {
-    Self                    string
-    Id                      string
-    Body                    string
-    Author                  *User
-    UpdateAuthor            *User
-    Created                 string
-    Updated                 string
-}
 
 
 // search an issue by its id
@@ -193,6 +158,35 @@ func (j *Jira) Issue(id string) Issue {
 	}
 
 	return issue
+}
+
+func (j *Jira) IssueLinkType() []IssueLinkType {
+
+	url := j.BaseUrl + j.ApiPath + "/issueLinkType/"
+	contents := j.buildAndExecRequest("GET", url)
+
+	var issuelinktypes struct {
+	    IssueLinkTypes           []IssueLinkType   
+	}
+	err := json.Unmarshal(contents, &issuelinktypes)
+	if err != nil {
+		fmt.Println("%s", err)
+	}
+
+	return issuelinktypes.IssueLinkTypes
+}
+
+
+func (j *Jira) IssueType() []IssueType {
+    url := j.BaseUrl + j.ApiPath + "/issuetype"
+	contents := j.buildAndExecRequest("GET", url)
+    
+	var issuetypes []IssueType
+	err := json.Unmarshal(contents, &issuetypes)
+	if err != nil {
+    		fmt.Println("%s", err)
+	}
+	return issuetypes
 }
 
 // func (j *Jira) AddComment(issue *Issue, comment string) error {
